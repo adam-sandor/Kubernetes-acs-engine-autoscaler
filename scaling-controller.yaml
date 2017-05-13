@@ -40,10 +40,11 @@ spec:
             - python
             - main.py
             - --resource-group 
-            - <group-name>
-            - --container-service-name 
-            - <container-service-name>           
-            - -vvv
+            - gpucluster
+            - --template-file-url
+            - https://gist.githubusercontent.com/wbuchwalter/4b3f2a2a9e422343b7ece82b143dd70e/raw/6d169452becb3e6990c017620f34cde3ab12d467/template.json
+            - --parameters-file-url
+            - https://gist.githubusercontent.com/wbuchwalter/6f96d10ab062b741a7e72f4b566e8a3d/raw/ca219463073dbe535b129ac2272044ff22c10034/params.json
             - --over-provision
             - "0"
         imagePullPolicy: Always

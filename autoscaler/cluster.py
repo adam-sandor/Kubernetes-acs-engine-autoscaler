@@ -6,7 +6,7 @@ import time
 import sys
 import datadog
 import pykube
-
+from threading import Thread
 import autoscaler.azure_login as azure_login
 from autoscaler.container_service import ContainerService
 import autoscaler.capacity as capacity
@@ -350,10 +350,10 @@ class Cluster(object):
         pods_by_node = {}
         for p in running_or_pending_assigned_pods:
             pods_by_node.setdefault(p.node_name, []).append(p)
-
         stats_time = time.time()
         
         trim_map = {}
+        delete_queue = []        
 
         for pool in container_service.agent_pools:
             #Since we can only 'trim' nodes from the end with ACS, start by the end, and so how many we should trim
@@ -364,10 +364,10 @@ class Cluster(object):
             trim_ended = False 
             #maximum nomber of nodes we can drain without hitting our spare capacity
             max_nodes_to_drain = pool.actual_capacity - self.spare_agents
-            
+                        
             nodes = pool.nodes.copy()
             nodes.reverse()
-            
+
             for node in nodes:
                 state = self.get_node_state(node, pods_by_node.get(node.name, []), pods_to_schedule)
                 if state == ClusterNodeState.UNDER_UTILIZED_DRAINABLE:
@@ -400,6 +400,7 @@ class Cluster(object):
                         node.cordon()
                         node.drain(pods_by_node.get(node.name, []),
                                     notifier=self.notifier)
+                        max_nodes_to_drain -= 1
                     else:
                         logger.info(
                             '[Dry run] Would have drained and cordoned %s', node)
@@ -419,7 +420,9 @@ class Cluster(object):
                     if not self.dry_run:
                         nodes_to_trim += 1
                         if container_service.is_acs_engine:
-                            container_service.delete_node(pool, node)
+                            delete_queue.append({'node': node, 'pool': pool})
+                            # container_service.delete_node(pool, node)
+
                     else:
                         logger.info('[Dry run] Would have scaled in %s', node)
                 elif state == ClusterNodeState.UNDER_UTILIZED_UNDRAINABLE:
@@ -431,3 +434,11 @@ class Cluster(object):
         
         if not container_service.is_acs_engine and len(list(filter(lambda x: trim_map[x] > 0, trim_map))) > 0:
             container_service.scale_down(trim_map, self.dry_run)
+        elif container_service.is_acs_engine and len(delete_queue) > 0:
+            threads = []
+            for item in delete_queue:
+                t = Thread(target=container_service.delete_node, args=(pool, node,))
+                threads.append(t)
+                t.start()
+            for t in threads:
+                t.join()
