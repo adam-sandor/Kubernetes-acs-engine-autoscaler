@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: autoscaler
-        image: wbuchwalter/kubernetes-acs-engine-autoscaler
+        image: wbuchwalter/kubernetes-acs-engine-autoscaler:dev
         env:
         - name: AZURE_SP_APP_ID
           valueFrom:
@@ -32,16 +32,20 @@ spec:
               name: autoscaler
               key: azure-sp-tenant-id       
         - name: PYKUBE_KUBERNETES_SERVICE_HOST
-          value: 10.240.255.15
+          value: 10.240.255.5
         command:
             - python
             - main.py
             - --resource-group 
-            - <your-group-name>
+            - wibuchk8s2
             - --template-file-url
-            - <your-template-file-url>
+            - https://gist.githubusercontent.com/wbuchwalter/4b3f2a2a9e422343b7ece82b143dd70e/raw/1a98ac637be0404aad0b95a4407a346ab7462c01/template.json
             - --parameters-file-url
-            - <your-parametes-file-url>
+            - https://gist.githubusercontent.com/wbuchwalter/6f96d10ab062b741a7e72f4b566e8a3d/raw/c6a3e6c8b23be9d07d6f7c0a7a7e689a8fddf6f7/params.json
+            - --debug
+            - -vvv
+            - --sleep
+            - '20'
         imagePullPolicy: Always
       restartPolicy: Always
       dnsPolicy: Default  # Don't use cluster DNS.
