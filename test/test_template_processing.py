@@ -40,7 +40,7 @@ class TestTemplateProcessing(unittest.TestCase):
 
     def test_unroll_nic(self):
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        template = get_arm_template(os.path.join(dir_path, './data/azuredeploy.json'), None)
+        template = get_arm_template(os.path.join(dir_path, './data/azuredeploy.original.json'), None)
         expected_template = get_arm_template(os.path.join(dir_path, './data/azuredeploy.expected_nic.json'), None)
         scaler = self.create_scaler([])
         node0 = self.create_node('agentpool1', 0)
@@ -51,7 +51,7 @@ class TestTemplateProcessing(unittest.TestCase):
     
     def test_unroll_vm(self):
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        template = get_arm_template(os.path.join(dir_path, './data/azuredeploy.json'), None)
+        template = get_arm_template(os.path.join(dir_path, './data/azuredeploy.original.json'), None)
         expected_template = get_arm_template(os.path.join(dir_path, './data/azuredeploy.expected_vm.json'), None)
         scaler = self.create_scaler([])
         node0 = self.create_node('agentpool1', 0)
