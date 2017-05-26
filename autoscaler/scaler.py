@@ -40,19 +40,7 @@ class Scaler(object):
         # TODO: how to handle case where cluster has 0 node? How to get unit
         # capacity?
         self.max_agent_pool_size = 100
-        self.agent_pools = self.get_agent_pools(nodes)
-
-    def get_agent_pools(self, nodes):
-        pools = {}
-        for node in nodes:
-            pool_name = utils.get_pool_name(node)
-            pools.setdefault(pool_name, []).append(node)
-
-        agent_pools = []
-        for pool_name in pools:
-            agent_pools.append(AgentPool(pool_name, pools[pool_name]))
-
-        return agent_pools
+        self.agent_pools = None
 
     def scale_pools(self, pool_sizes):
         raise NotImplementedError()
@@ -98,8 +86,8 @@ class Scaler(object):
                 state = ClusterNodeState.UNDER_UTILIZED_DRAINABLE
             else:
                 state = ClusterNodeState.UNDER_UTILIZED_UNDRAINABLE
-                logger.info('Undrainable pods: {}'.format(
-                        undrainable_list))
+                # logger.info('Undrainable pods: {}'.format(
+                #         undrainable_list))
         else:
             if node.unschedulable:
                 state = ClusterNodeState.IDLE_UNSCHEDULABLE

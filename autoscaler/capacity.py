@@ -18,6 +18,9 @@ with open(Config.CAPACITY_DATA, 'r') as f:
         RESOURCE_SPEC[instance_type] = resource
 DEFAULT_TYPE_SELECTOR_KEY = 'beta.kubernetes.io/instance-type'
 
+def get_capacity_for_instance_type(instance_type):
+    return RESOURCE_SPEC[instance_type]
+
 def is_possible(pod, agent_pools):
     """
     returns whether the pod is possible under the maximum allowable capacity

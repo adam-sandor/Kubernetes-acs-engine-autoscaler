@@ -33,6 +33,25 @@ class EngineScaler(Scaler):
 
         self.arm_parameters = arm_parameters
         self.arm_template = arm_template
+        self.agent_pools = self.get_agent_pools(nodes)
+
+    def get_agent_pools(self, nodes):
+        params = self.arm_parameters
+        pools = {}
+        for param in params:
+            if param.endswith('VMSize') and param != 'masterVMSize':
+                pool_name = param[:-6]
+                pools.setdefault(pool_name, {'size': params[param]['value'], 'nodes': []})
+        for node in nodes:
+            pool_name = utils.get_pool_name(node)
+            pools[pool_name]['nodes'].append(node)
+
+        agent_pools = []
+        for pool_name in pools:
+            pool = pools[pool_name]
+            agent_pools.append(AgentPool(pool_name, pool['size'], pool['nodes']))
+
+        return agent_pools
 
     def delete_resources_for_node(self, node):
         logger.info('deleting node {}'.format(node.name))
@@ -166,7 +185,7 @@ class EngineScaler(Scaler):
             pods_by_node.setdefault(p.node_name, []).append(p)
 
         for pool in self.agent_pools:
-            # maximum nomber of nodes we can drain without hitting our spare
+            # maximum nomber of nodes we can drain without hiting our spare
             # capacity
             max_nodes_to_drain = pool.actual_capacity - self.spare_count
 

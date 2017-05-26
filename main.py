@@ -23,7 +23,7 @@ DEBUG_LOGGING_MAP = {
               help='Full path to kubeconfig file. If not provided, '
                    'we assume that we\'re running on kubernetes.')
 #How many agents should we keep even if the cluster is not utilized? The autoscaler will currenty break if --spare-agents == 0
-@click.option("--spare-agents", default=1) 
+@click.option("--spare-agents", default=0) 
 @click.option("--service-principal-app-id", default=None, envvar='AZURE_SP_APP_ID')
 @click.option("--service-principal-secret", default=None, envvar='AZURE_SP_SECRET')
 @click.option("--service-principal-tenant-id", default=None, envvar='AZURE_SP_TENANT_ID')
