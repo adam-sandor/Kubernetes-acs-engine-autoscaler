@@ -15,7 +15,7 @@ from copy import deepcopy
 import autoscaler.utils as utils
 from autoscaler.agent_pool import AgentPool
 from autoscaler.scaler import Scaler, ClusterNodeState
-from autoscaler.template_processing import unroll_resources, delete_nsg
+from autoscaler.template_processing import prepare_template_for_scale_out
 
 logger = logging.getLogger(__name__)
 
@@ -145,13 +145,21 @@ class EngineScaler(Scaler):
         from azure.mgmt.resource.resources.models import DeploymentProperties, TemplateLink
 
         for pool in self.agent_pools:
-            # We don't need to set the offset parameter as we are directly specifying each
-            # resource in the template instead of using Count func
-            self.arm_parameters[pool.name +
-                                'Count'] = {'value': new_pool_sizes[pool.name]}
-
-        template = self.prepare_template_for_scale_up(
-            self.arm_template, new_pool_sizes)
+            if new_pool_sizes[pool.name] == 0:
+                # This is required as 0 is not an accepted value for the Count parameter,
+                # but setting the offset to 1 actually prevent the deployment from changing anything
+                self.arm_parameters[pool.name +
+                                    'Count'] = {'value': 1}
+                self.arm_parameters[pool.name +
+                                    'Offset'] = {'value': 1}
+            else:
+                # We don't need to set the offset parameter as we are directly specifying each
+                # resource in the template instead of using Count func
+                self.arm_parameters[pool.name +
+                                    'Count'] = {'value': new_pool_sizes[pool.name]}
+        
+        template = prepare_template_for_scale_out(
+            self.arm_template, self.agent_pools, new_pool_sizes)
 
         properties = DeploymentProperties(template=template, template_link=None,
                                           parameters=self.arm_parameters, mode='incremental')
@@ -163,13 +171,6 @@ class EngineScaler(Scaler):
         return smc.deployments.create_or_update(self.resource_group_name,
                                                 deployment_name,
                                                 properties, raw=False)
-
-    def prepare_template_for_scale_up(self, template, new_pool_sizes):
-        # These modifications are needed in order to avoid network outages when
-        # scaling up
-        template = unroll_resources(template, self.agent_pools, new_pool_sizes)
-        template = delete_nsg(template)
-        return template
 
     def maintain(self, pods_to_schedule, running_or_pending_assigned_pods):
         """

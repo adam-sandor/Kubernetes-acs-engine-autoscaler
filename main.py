@@ -23,7 +23,7 @@ DEBUG_LOGGING_MAP = {
               help='Full path to kubeconfig file. If not provided, '
                    'we assume that we\'re running on kubernetes.')
 #How many agents should we keep even if the cluster is not utilized? The autoscaler will currenty break if --spare-agents == 0
-@click.option("--spare-agents", default=0) 
+@click.option("--spare-agents", default=1) 
 @click.option("--service-principal-app-id", default=None, envvar='AZURE_SP_APP_ID')
 @click.option("--service-principal-secret", default=None, envvar='AZURE_SP_SECRET')
 @click.option("--service-principal-tenant-id", default=None, envvar='AZURE_SP_TENANT_ID')
@@ -42,7 +42,7 @@ DEBUG_LOGGING_MAP = {
               help="Sets the debug noise level, specify multiple times "
                    "for more verbosity.",
               type=click.IntRange(0, 3, clamp=True),
-              count=True)
+              count=True, default=2)
 #Debug mode will explicitly surface erros
 @click.option("--debug", is_flag=True) 
 def main(resource_group, sleep, kubeconfig,

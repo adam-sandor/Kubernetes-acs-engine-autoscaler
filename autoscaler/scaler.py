@@ -8,6 +8,7 @@ import logging
 import autoscaler.utils as utils
 from autoscaler.agent_pool import AgentPool
 from autoscaler.kube import KubeResource
+import autoscaler.capacity as capacity
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +103,7 @@ class Scaler(object):
         accounted_pods = dict((p, False) for p in pods)
         num_unaccounted = len(pods)
         new_pool_sizes = {}
-
+        ordered_pools = capacity.order_by_cost_asc(self.agent_pools)
         for pool in self.agent_pools:
             new_pool_sizes[pool.name] = pool.actual_capacity
 

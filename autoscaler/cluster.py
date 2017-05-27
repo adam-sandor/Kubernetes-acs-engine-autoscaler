@@ -171,6 +171,8 @@ class Cluster(object):
                 logger.info("{pod} fits on {node}".format(pod=pod,
                                                           node=fitting))
         logger.info("Pending pods: {}".format(len(pending_pods)))
+        for pod in pending_pods:
+            logger.debug(pod.name)
 
         return pending_pods
 
