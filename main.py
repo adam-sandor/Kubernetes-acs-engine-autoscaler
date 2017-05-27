@@ -17,13 +17,13 @@ DEBUG_LOGGING_MAP = {
 }
 
 @click.command()
-@click.option("--resource-group")
-@click.option("--sleep", default=60)
+@click.option("--resource-group", help='name of the resource group hosting the acs-engine cluster')
+@click.option("--sleep", default=60, help='time in seconds between successive checks')
 @click.option("--kubeconfig", default=None,
               help='Full path to kubeconfig file. If not provided, '
                    'we assume that we\'re running on kubernetes.')
 #How many agents should we keep even if the cluster is not utilized? The autoscaler will currenty break if --spare-agents == 0
-@click.option("--spare-agents", default=1) 
+@click.option("--spare-agents", default=1, help='number of agent per pool that should always stay up') 
 @click.option("--service-principal-app-id", default=None, envvar='AZURE_SP_APP_ID')
 @click.option("--service-principal-secret", default=None, envvar='AZURE_SP_SECRET')
 @click.option("--service-principal-tenant-id", default=None, envvar='AZURE_SP_TENANT_ID')
@@ -31,6 +31,7 @@ DEBUG_LOGGING_MAP = {
 @click.option("--client-private-key", default=None, envvar='CLIENT_PRIVATE_KEY')
 @click.option("--no-scale", is_flag=True)
 @click.option("--no-maintenance", is_flag=True)
+@click.option("--ignore-pools", default=None, help='list of pools that should be ignored by the autoscaler')
 @click.option("--slack-hook", default=None, envvar='SLACK_HOOK',
               help='Slack webhook URL. If provided, post scaling messages '
                    'to Slack.')
