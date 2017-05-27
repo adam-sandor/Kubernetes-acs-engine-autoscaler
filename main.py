@@ -31,7 +31,6 @@ DEBUG_LOGGING_MAP = {
 @click.option("--client-private-key", default=None, envvar='CLIENT_PRIVATE_KEY')
 @click.option("--no-scale", is_flag=True)
 @click.option("--no-maintenance", is_flag=True)
-@click.option("--ignore-pools", default=None, help='list of pools that should be ignored by the autoscaler')
 @click.option("--slack-hook", default=None, envvar='SLACK_HOOK',
               help='Slack webhook URL. If provided, post scaling messages '
                    'to Slack.')
