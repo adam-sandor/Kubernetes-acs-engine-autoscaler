@@ -25,7 +25,7 @@ class EngineScaler(Scaler):
     def __init__(
             self, resource_group, nodes,
             over_provision, spare_count, dry_run,
-            deployments, arm_template, arm_parameters):
+            deployments, arm_template, arm_parameters, ignore_pools):
 
         Scaler.__init__(
             self, resource_group, nodes, over_provision,
@@ -33,7 +33,9 @@ class EngineScaler(Scaler):
 
         self.arm_parameters = arm_parameters
         self.arm_template = arm_template
-        self.agent_pools = self.get_agent_pools(nodes)
+        for pool_name in ignore_pools.split(','):
+            self.ignored_pool_names[pool_name] = True
+        self.agent_pools, self.scalable_pools = self.get_agent_pools(nodes)
 
     def get_agent_pools(self, nodes):
         params = self.arm_parameters
@@ -41,17 +43,22 @@ class EngineScaler(Scaler):
         for param in params:
             if param.endswith('VMSize') and param != 'masterVMSize':
                 pool_name = param[:-6]
-                pools.setdefault(pool_name, {'size': params[param]['value'], 'nodes': []})
+                pools.setdefault(
+                    pool_name, {'size': params[param]['value'], 'nodes': []})
         for node in nodes:
             pool_name = utils.get_pool_name(node)
             pools[pool_name]['nodes'].append(node)
 
         agent_pools = []
+        scalable_pools = []
         for pool_name in pools:
-            pool = pools[pool_name]
-            agent_pools.append(AgentPool(pool_name, pool['size'], pool['nodes']))
+            pool_info = pools[pool_name]
+            pool = AgentPool(pool_name, pool_info['size'], pool_info['nodes'])
+            agent_pools.append(pool)
+            if not pool_name in self.ignored_pool_names:
+                scalable_pools.append(pool)
 
-        return agent_pools
+        return agent_pools, scalable_pools
 
     def delete_resources_for_node(self, node):
         logger.info('deleting node {}'.format(node.name))
@@ -121,7 +128,7 @@ class EngineScaler(Scaler):
 
     def scale_pools(self, new_pool_sizes):
         has_changes = False
-        for pool in self.agent_pools:
+        for pool in self.scalable_pools:
             new_size = new_pool_sizes[pool.name]
             new_pool_sizes[pool.name] = min(pool.max_size, new_size)
             if new_pool_sizes[pool.name] == pool.actual_capacity:
@@ -143,11 +150,11 @@ class EngineScaler(Scaler):
 
     def deploy_pools(self, new_pool_sizes):
         from azure.mgmt.resource.resources.models import DeploymentProperties, TemplateLink
-
-        for pool in self.agent_pools:
+        for pool in self.scalable_pools:
             if new_pool_sizes[pool.name] == 0:
                 # This is required as 0 is not an accepted value for the Count parameter,
-                # but setting the offset to 1 actually prevent the deployment from changing anything
+                # but setting the offset to 1 actually prevent the deployment
+                # from changing anything
                 self.arm_parameters[pool.name +
                                     'Count'] = {'value': 1}
                 self.arm_parameters[pool.name +
@@ -157,7 +164,7 @@ class EngineScaler(Scaler):
                 # resource in the template instead of using Count func
                 self.arm_parameters[pool.name +
                                     'Count'] = {'value': new_pool_sizes[pool.name]}
-        
+
         template = prepare_template_for_scale_out(
             self.arm_template, self.agent_pools, new_pool_sizes)
 
@@ -185,9 +192,9 @@ class EngineScaler(Scaler):
         for p in running_or_pending_assigned_pods:
             pods_by_node.setdefault(p.node_name, []).append(p)
 
-        for pool in self.agent_pools:
-            # maximum nomber of nodes we can drain without hiting our spare
-            # capacity
+        for pool in self.scalable_pools:
+                # maximum nomber of nodes we can drain without hiting our spare
+                # capacity
             max_nodes_to_drain = pool.actual_capacity - self.spare_count
 
             for node in pool.nodes:

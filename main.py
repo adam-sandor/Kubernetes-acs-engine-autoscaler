@@ -31,6 +31,7 @@ DEBUG_LOGGING_MAP = {
 @click.option("--client-private-key", default=None, envvar='CLIENT_PRIVATE_KEY')
 @click.option("--no-scale", is_flag=True)
 @click.option("--no-maintenance", is_flag=True)
+@click.option("--ignore-pools", default='', help='list of pools that should be ignored by the autoscaler, delimited by a comma')
 @click.option("--slack-hook", default=None, envvar='SLACK_HOOK',
               help='Slack webhook URL. If provided, post scaling messages '
                    'to Slack.')
@@ -49,7 +50,7 @@ def main(resource_group, sleep, kubeconfig,
          service_principal_app_id, service_principal_secret,
          kubeconfig_private_key, client_private_key, 
          service_principal_tenant_id, spare_agents,
-         no_scale, no_maintenance,slack_hook, slack_bot_token,
+         no_scale, no_maintenance, ignore_pools, slack_hook, slack_bot_token,
          dry_run, verbose, debug):
     logger_handler = logging.StreamHandler(sys.stderr)
     logger_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
@@ -87,6 +88,7 @@ def main(resource_group, sleep, kubeconfig,
                       kubeconfig_private_key=kubeconfig_private_key,
                       client_private_key=client_private_key,
                       scale_up=not no_scale,
+                      ignore_pools=ignore_pools,
                       maintainance=not no_maintenance,
                       over_provision=over_provision,
                       notifier=notifier,

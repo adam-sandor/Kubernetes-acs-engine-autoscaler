@@ -119,7 +119,6 @@ def prepare_template_for_scale_out(template, pools, new_pool_sizes):
             target_pools.append(pool)
         else:
             unchanged_pools.append(pool)
-
     template = deepcopy(template)
 
     # Delete all resources which have no impact on the pools or are never changed, such as Master

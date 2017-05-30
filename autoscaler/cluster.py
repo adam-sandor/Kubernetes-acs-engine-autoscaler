@@ -31,7 +31,7 @@ class Cluster(object):
     def __init__(self, kubeconfig, idle_threshold, spare_agents, 
                  service_principal_app_id, service_principal_secret, service_principal_tenant_id,
                  kubeconfig_private_key, client_private_key,
-                 instance_init_time, resource_group, notifier,
+                 instance_init_time, resource_group, notifier, ignore_pools,
                  scale_up=True, maintainance=True,
                  over_provision=5, dry_run=False):
 
@@ -55,6 +55,7 @@ class Cluster(object):
         self.notifier = notifier
         self.dry_run = dry_run
         self.deployments = Deployments()
+        self.ignore_pools = ignore_pools
 
     def login(self):
         login(
@@ -107,6 +108,11 @@ class Cluster(object):
             except:
                 logger.warn("Unexpected error: {}".format(sys.exc_info()[0]))
                 return False
+    
+    def create_kube_node(self, node):
+        kube_node = KubeNode(node)
+        kube_node.capacity = capacity.get_capacity_for_instance_type(kube_node.instance_type)
+        return kube_node
 
     def loop_logic(self):
         pykube_nodes = pykube.Node.objects(self.api)
@@ -115,7 +121,7 @@ class Cluster(object):
                 'Failed to list nodes. Please check kube configuration. Terminating scale loop.')
             return False
 
-        all_nodes = list(filter(utils.is_agent, map(KubeNode, pykube_nodes)))
+        all_nodes = list(filter(utils.is_agent, map(self.create_kube_node, pykube_nodes)))
 
         scaler = EngineScaler(
             resource_group=self.resource_group,
@@ -124,6 +130,7 @@ class Cluster(object):
             arm_template=self.arm_template,
             arm_parameters=self.arm_parameters,
             dry_run=self.dry_run,
+            ignore_pools=self.ignore_pools,
             over_provision=self.over_provision,
             spare_count=self.spare_agents)
 

@@ -45,7 +45,8 @@ class TestCluster(unittest.TestCase):
             service_principal_secret='dummy',
             service_principal_tenant_id='dummy',
             kubeconfig_private_key='dummy',
-            client_private_key='dummy'
+            client_private_key='dummy',
+            ignore_pools=''
         )
 
     def test_get_pending_pods(self):
