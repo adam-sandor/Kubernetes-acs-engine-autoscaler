@@ -80,7 +80,7 @@ $ kubectl logs autoscaler-opnax
 $ docker build -t autoscaler .
 $ ./devenvh.sh
 #in the container
-$ python main.py --resource-group k8s --service-principal-app-id 'XXXXXXXXX' --service-principal-secret 'XXXXXXXXXXXXX' service-principal-tenant-id 'XXXXXX' --dry-run -vvv --kubeconfig /root/.kube/config --kubeconfig-private-key 'XXXX' --client-private-key 'XXXX'
+$ python main.py --resource-group k8s --service-principal-app-id 'XXXXXXXXX' --service-principal-secret 'XXXXXXXXXXXXX' service-principal-tenant-id 'XXXXXX' -vvv --kubeconfig /root/.kube/config --kubeconfig-private-key 'XXXX' --client-private-key 'XXXX'
 ```
 
 
