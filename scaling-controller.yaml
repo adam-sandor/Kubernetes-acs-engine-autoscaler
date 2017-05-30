@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: autoscaler
-        image: wbuchwalter/kubernetes-acs-engine-autoscaler:dev
+        image: wbuchwalter/kubernetes-acs-engine-autoscaler:0.3.0
         env:
         - name: AZURE_SP_APP_ID
           valueFrom:
